@@ -3,7 +3,7 @@
     Installs (or repairs/updates) the Unispace pyRevit toolbar for the current user.
 
 .DESCRIPTION
-    Clones https://github.com/Unispace365/toolbar (branch main) into the user's
+    Clones https://github.com/UnispaceIT/toolbar (branch main) into the user's
     pyRevit Extensions folder, enables it, and turns on pyRevit's auto-update so the
     toolbar pulls the latest main every time Revit starts.
 

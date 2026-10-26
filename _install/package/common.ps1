@@ -1,7 +1,7 @@
 # Shared helpers for install.ps1 / uninstall.ps1. Dot-sourced, not run directly.
 
 $ExtensionName = 'Unispace'
-$RepoUrl       = 'https://github.com/Unispace365/toolbar.git'
+$RepoUrl       = 'https://github.com/UnispaceIT/toolbar.git'
 $Branch        = 'main'
 
 # pyRevit clones third-party extensions to %APPDATA%\pyRevit\Extensions\<Name>.extension
