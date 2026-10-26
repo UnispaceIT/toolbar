@@ -13,6 +13,11 @@ Installs the Unispace pyRevit toolbar for the signed-in user, without admin righ
 - Re-running the installer is safe. An existing install is updated, a broken one is
   re-cloned, and a copy installed from anywhere else (e.g. a developer's own clone)
   is left untouched.
+- **Moving off the old repo.** The toolbar used to live at `Unispace365/toolbar`,
+  which Unispace no longer controls. Installs that still pull from it are treated as
+  not installed by `detect.ps1`, so Intune runs the installer, which removes them and
+  re-clones from `UnispaceIT/toolbar`. If Revit is open and holding files, the
+  installer fails with a log message and Intune retries later.
 - `uninstall.ps1` removes the clone. pyRevit and its settings are left as-is.
 - Both scripts log to `%LOCALAPPDATA%\Unispace\Logs\toolbar-install.log` and exit
   non-zero on failure, so Intune reports failures correctly.
@@ -52,9 +57,9 @@ Installs the Unispace pyRevit toolbar for the signed-in user, without admin righ
    | Detection rules | Custom script → `detect.ps1`, run as 32-bit: No, enforce signature check: No |
    | Dependencies | The **pyRevit** Company Portal app, *Automatically install*: Yes |
 
-   Alternative detection rule if you prefer not to use a script: File →
-   path `%APPDATA%\pyRevit\Extensions\Unispace.extension`, file `extension.json`,
-   *File or folder exists*.
+   Use the `detect.ps1` script rule, not a simple "file exists" rule. A file rule
+   can't tell an old install (pulling from `Unispace365/toolbar`) from a new one, so
+   old installs would never be replaced.
 
 3. Replace the old "Unispace Toolbar Installer v2.exe" app. Its uninstaller never
    worked, so supersede it **without** "Uninstall previous version". The new

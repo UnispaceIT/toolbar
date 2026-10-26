@@ -8,6 +8,8 @@
     toolbar pulls the latest main every time Revit starts.
 
     Safe to run repeatedly: an existing install is updated rather than re-cloned.
+    An install that still points at the old Unispace365/toolbar repo is removed and
+    re-cloned from the new one.
     Runs in user context; no admin rights needed. Requires pyRevit.
 
     Exit codes: 0 = success, 1 = failure (details in %LOCALAPPDATA%\Unispace\Logs).
@@ -47,7 +49,38 @@ function Install-Toolbar {
         }
     }
 
+    # Installs made before the move to UnispaceIT/toolbar still pull from the old
+    # Unispace365/toolbar repo, which we no longer control. Updating would keep pulling
+    # from there, so remove the clone and re-clone from $RepoUrl instead.
+    $reclone = $false
     if (Test-Path (Join-Path $ManagedPath '.git')) {
+        $origin = Get-CloneOriginUrl -Path $ManagedPath
+        if (-not (Test-IsCurrentRepo $origin)) {
+            $reclone = $true
+            Write-Log "Existing install at '$ManagedPath' pulls from '$origin', not $RepoUrl; removing it so it can be re-cloned." 'WARN'
+            if ($PSCmdlet.ShouldProcess($ManagedPath, 'Remove install from old repo')) {
+                # Rename first: it either fully succeeds or changes nothing, so a locked
+                # file (Revit open) can't leave a half-deleted toolbar behind. The new
+                # name doesn't end in '.extension', so pyRevit stops loading it.
+                $oldCopy = '{0}.old-{1}' -f $ManagedPath, (Get-Date -Format 'yyyyMMddHHmmss')
+                try {
+                    Rename-Item -Path $ManagedPath -NewName (Split-Path $oldCopy -Leaf) -ErrorAction Stop
+                }
+                catch {
+                    Write-Log "Could not move '$ManagedPath' aside (files in use by Revit?). Close Revit and retry. $($_.Exception.Message)" 'ERROR'
+                    return 1
+                }
+                try {
+                    Remove-Item -Path $oldCopy -Recurse -Force -ErrorAction Stop
+                }
+                catch {
+                    Write-Log "Could not delete '$oldCopy'; it is unused and can be deleted by hand. $($_.Exception.Message)" 'WARN'
+                }
+            }
+        }
+    }
+
+    if ((Test-Path (Join-Path $ManagedPath '.git')) -and -not $reclone) {
         Write-Log "Existing install found at '$ManagedPath'; updating."
         if ($PSCmdlet.ShouldProcess($ManagedPath, 'Update toolbar from git')) {
             if (-not $registered) {

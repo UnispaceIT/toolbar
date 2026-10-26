@@ -85,3 +85,26 @@ function Test-SamePath {
     $norm = { param($p) [IO.Path]::GetFullPath($p).TrimEnd('\') }
     return (& $norm $A) -ieq (& $norm $B)
 }
+
+function Get-CloneOriginUrl {
+    # The 'origin' URL from a clone's .git\config, or $null. Read as text because
+    # employee machines usually have no git.exe (pyRevit bundles its own git library).
+    param([Parameter(Mandatory)][string]$Path)
+    $config = Join-Path $Path '.git\config'
+    if (-not (Test-Path $config)) { return $null }
+    $inOrigin = $false
+    foreach ($line in (Get-Content -Path $config -ErrorAction SilentlyContinue)) {
+        if ($line -match '^\s*\[') { $inOrigin = $line -match '^\s*\[remote\s+"origin"\]' ; continue }
+        if ($inOrigin -and $line -match '^\s*url\s*=\s*(.+?)\s*$') { return $Matches[1] }
+    }
+    return $null
+}
+
+function Test-IsCurrentRepo {
+    # True if $Url is $RepoUrl, ignoring case, a trailing '.git' or '/', and a 'user@' prefix.
+    # Installs from the old Unispace365/toolbar repo return $false.
+    param([string]$Url)
+    if (-not $Url) { return $false }
+    $norm = { param($u) (($u.Trim() -replace '^(https?://)[^/@]+@', '$1') -replace '/+$', '' -replace '\.git$', '').ToLowerInvariant() }
+    return (& $norm $Url) -eq (& $norm $RepoUrl)
+}
