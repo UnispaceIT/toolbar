@@ -7,7 +7,7 @@ REM Define variables
 set command_name=extend
 set extension_type=ui
 set extension_name=Unispace
-set repository_url=https://github.com/Unispace365/toolbar.git
+set repository_url=https://github.com/UnispaceIT/toolbar.git
 set branch=main
 
 REM Build the command
